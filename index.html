@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CS405 Project 1 — Moda İskelesi</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #0e0f12; color: #e8e6e1;
+                 font: 13px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; overflow: hidden; }
+    canvas { display: block; width: 100vw; height: 100vh; }
+    .panel { position: fixed; background: rgba(14,15,18,.82); border: 1px solid #2a2c33;
+             border-radius: 6px; padding: 8px 10px; }
+    #hud   { top: 10px; left: 10px; min-width: 260px; }
+    #tests { bottom: 10px; left: 10px; max-height: 45vh; overflow: auto; min-width: 320px; }
+    #tests h3, #hud h3 { margin: 0 0 4px; font-size: 12px; color: #9aa0aa; font-weight: 600; }
+    #tests h3 { cursor: pointer; }
+    #tests.collapsed #testlist > div:not(:first-child) { display: none; }
+    .ok   { color: #6fcf8f; }
+    .fail { color: #f07a6a; }
+    .todo { color: #8a8f99; }
+    #controls { top: 10px; right: 10px; width: 300px; max-height: calc(100vh - 40px); overflow: auto; }
+    #controls details { margin-bottom: 6px; }
+    #controls summary { cursor: pointer; color: #c9a86a; font-weight: 600; margin-bottom: 4px; }
+    #controls .row { display: grid; grid-template-columns: 70px 1fr 44px; align-items: center; gap: 6px; margin: 2px 0; }
+    #controls select { grid-column: span 2; }
+    #controls output { text-align: right; color: #9aa0aa; }
+    #controls button { margin: 4px 4px 0 0; background: #23262d; color: #e8e6e1; border: 1px solid #3a3d45;
+                       border-radius: 4px; padding: 3px 8px; font: inherit; cursor: pointer; }
+    .hint, .caminfo { color: #9aa0aa; font-size: 12px; margin: 4px 0; }
+    .tree pre { margin: 2px 0; font-size: 12px; color: #c9cdd4; }
+    .matrices > div { margin-top: 6px; color: #6b7079; }
+    .matrices > div.active { color: #e8e6e1; }
+    .matrices pre { margin: 2px 0 0; font-size: 11px; }
+    #error { position: fixed; inset: 0; display: none; place-items: center; background: #0e0f12;
+             color: #f07a6a; font-size: 15px; padding: 24px; text-align: center; }
+  </style>
+</head>
+<body>
+  <canvas id="gfx"></canvas>
+  <div id="hud" class="panel"><h3>Hoca Ali Rıza — Moda İskelesi</h3><div id="readout">starting…</div></div>
+  <div id="tests" class="panel"><h3 onclick="this.parentElement.classList.toggle('collapsed')">math tests (click to fold)</h3><div id="testlist"></div></div>
+  <div id="controls" class="panel"></div>
+  <div id="error"></div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
