@@ -8,6 +8,7 @@
 //   multiply(A, B) = A · B   → B is applied to the point first.
 //
 // Every function returns a NEW Float32Array(16).
+import * as V from './vec3.js';
 
 const TODO = name => { throw new Error(`TODO: mat4.${name}`); };
 
@@ -121,7 +122,7 @@ export function transformPoint(m, p) {
 }
 
 // ───────────────────────────── Part C ─────────────────────────────
-import * as V from './vec3.js';      // ← bunu dosyanın EN ÜSTÜNE ekle
+
 /**
  * View matrix: world → camera space. The camera sits at `eye`, looks at
  * `target`, and in camera space looks down −z with +y up.
@@ -158,7 +159,7 @@ export function perspective(fovY, aspect, near, far) {
     return new Float32Array([
         f / aspect, 0, 0, 0,
         0, f, 0, 0,
-        0, 0, far / (near - far), -1,     // −f
+        0, 0, far / (near - far), -1,    // w = −z (perspective divide)
         0, 0, near * far / (near - far), 0,
     ]);
 }

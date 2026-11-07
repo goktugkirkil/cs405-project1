@@ -6,6 +6,7 @@ import * as M from './mat4.js';
 import * as C from '../scene/compose.js';
 import { Node } from '../scene/graph.js';
 import * as Cam from '../scene/camera.js';
+import * as Cv from './curves.js';
 
 const tests = [];
 const test = (part, name, fn) => tests.push({ part, name, fn });
@@ -171,6 +172,50 @@ test('Ccam', 'frustumCorners (orthographic)', () => {
   vecNear(c[7], [-2, 1, -10], 'far top-left');
 });
 
+// ───────── Part D (src/math/curves.js)
+const BP = [[0, 0], [1, 2], [3, 2], [4, 0]];
+test('D', 'bernstein', () => {
+  vecNear(Cv.bernstein(0), [1, 0, 0, 0], 't = 0');
+  vecNear(Cv.bernstein(1), [0, 0, 0, 1], 't = 1');
+  vecNear(Cv.bernstein(0.5), [0.125, 0.375, 0.375, 0.125], 't = 0.5');
+  const b = Cv.bernstein(0.3);
+  near(b[0] + b[1] + b[2] + b[3], 1, 'weights sum to 1');
+});
+test('D', 'bezier: starts at P0, ends at P3', () => {
+  vecNear(Cv.bezier(...BP, 0), [0, 0], 't = 0');
+  vecNear(Cv.bezier(...BP, 1), [4, 0], 't = 1');
+  vecNear(Cv.bezier(...BP, 0.5), [2, 1.5], 't = 0.5');
+  // P0 ≠ 0, so a wrong weight on P0 cannot hide
+  const Q = [[1, 3], [2, 5], [4, 5], [5, 1]];
+  vecNear(Cv.bezier(...Q, 0), [1, 3], 'P0 ≠ 0, t = 0');
+  vecNear(Cv.bezier(...Q, 0.5), [3, 4.25], 'P0 ≠ 0, t = 0.5');
+  const b = Cv.bezier(...Q, 0.3), L = Cv.deCasteljau(...Q, 0.3)[3][0];
+  vecNear(b, L, 'bezier(t) = de Casteljau(t)');
+});
+test('D', 'bezierTangent', () => {
+  vecNear(Cv.bezierTangent(...BP, 0), [3, 6], 't = 0 → 3(P1 − P0)');
+  vecNear(Cv.bezierTangent(...BP, 1), [3, -6], 't = 1 → 3(P3 − P2)');
+  vecNear(Cv.bezierTangent(...BP, 0.5), [4.5, 0], 't = 0.5');
+});
+test('D', 'deCasteljau', () => {
+  const L = Cv.deCasteljau(...BP, 0.5);
+  if (!L || L.length !== 4) throw new Error('must return 4 levels');
+  if (L[1].length !== 3 || L[2].length !== 2 || L[3].length !== 1) throw new Error('levels must have 4, 3, 2, 1 points');
+  vecNear(L[1][0], [0.5, 1], 'level 1, first point');
+  vecNear(L[2][1], [2.75, 1.5], 'level 2, second point');
+  vecNear(L[3][0], [2, 1.5], 'final point = bezier(t)');
+});
+test('D', 'c1Partner', () => {
+  vecNear(Cv.c1Partner([1, 1], [0, 0]), [2, 2], 'mirror of the handle through the joint');
+  vecNear(Cv.c1Partner([2, 0], [1, 3]), [3, -3], 'general');
+});
+test('D', 'catmullRom', () => {
+  const p = [[0, 0], [1, 1], [2, 1], [3, 0]];
+  vecNear(Cv.catmullRom(...p, 0), [1, 1], 't = 0 → p1');
+  vecNear(Cv.catmullRom(...p, 1), [2, 1], 't = 1 → p2');
+  vecNear(Cv.catmullRom(...p, 0.5), [1.5, 1.125], 't = 0.5');
+});
+
 /** Run every test. status: 'pass' | 'fail' | 'todo' (function not written yet). */
 export function runAll() {
   const results = tests.map(({ part, name, fn }) => {
@@ -185,5 +230,6 @@ export function runAll() {
   return { results, passed: count('pass'), failed: count('fail'), todo: count('todo'),
            partA: partOK('A'), partB: partOK('A') && partOK('B'), partC: partOK('A') && partOK('C'),
            orbit: partOK('A') && partOK('C') && results.filter(r => r.name === 'orbitEye').every(r => r.status === 'pass'),
-           frustum: partOK('A') && partOK('C') && partOK('Ccam') };
+           frustum: partOK('A') && partOK('C') && partOK('Ccam'),
+           partD: partOK('A') && partOK('D') };
 }
