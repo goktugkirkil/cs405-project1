@@ -22,7 +22,7 @@ struct VSOut { @builtin(position) pos : vec4f, @location(0) n : vec3f };
 
 @fragment fn fs(i : VSOut) -> @location(0) vec4f {
   let L = normalize(vec3f(0.4, 0.8, 0.6));
-  let d = max(dot(normalize(i.n), L), 0.0);
+  let d = abs(dot(normalize(i.n), L));          // abs: open surfaces are lit on both sides
   return vec4f(obj.colour.rgb * (0.30 + 0.70 * d), obj.colour.a);
 }
 `;

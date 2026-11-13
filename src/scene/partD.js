@@ -30,6 +30,8 @@ export const partD = {
   showCasteljau: true,
   showCatmull: true,
   animateAlong: true,
+  extrude: true,           // bonus: sweep the Catmull–Rom hill line out of the painting
+  depth: 0.35,
 };
 export const PART_D_DEFAULTS = { ...partD };
 

@@ -61,6 +61,7 @@ export async function createRenderer(canvas) {
     { shaderLocation: 1, offset: 12, format: 'float32x3' } ] }];
 
   const meshPipe     = pipeline(meshWGSL,     [camLayout, objLayout],            posNormal, { cull: 'back' });
+  const meshPipe2    = pipeline(meshWGSL,     [camLayout, objLayout],            posNormal);   // double-sided (open surfaces)
   const texPipe      = pipeline(texturedWGSL, [camLayout, objLayout, texLayout], posUV);
   const linePipe     = pipeline(lineWGSL,     [camLayout], posColour, { topology: 'line-list' });
   const overlayPipe  = pipeline(lineWGSL,     [camLayout], posColour, { topology: 'line-list', depth: depthOff });
@@ -150,9 +151,20 @@ export async function createRenderer(canvas) {
       return objCount - 1;
     },
 
-    drawMesh(mesh, model, colour = [0.8, 0.8, 0.8, 1]) {
+    /** A mesh whose vertices change every frame (pos+normal). Capacity in vertices. */
+    dynamicMesh(maxVertices) {
+      const buf = device.createBuffer({ size: maxVertices * 24, usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST });
+      return { buf, kind: 'mesh', count: 0, max: maxVertices };
+    },
+    updateMesh(mesh, data) {
+      mesh.count = Math.min(mesh.max, data.length / 6);
+      device.queue.writeBuffer(mesh.buf, 0, data, 0, mesh.count * 6);
+    },
+
+    drawMesh(mesh, model, colour = [0.8, 0.8, 0.8, 1], doubleSided = false) {
+      if (!mesh.count) return;
       const s = api._slot(model, colour);
-      pass.setPipeline(meshPipe);
+      pass.setPipeline(doubleSided ? meshPipe2 : meshPipe);
       pass.setBindGroup(1, objBind, [s * OBJ_STRIDE]);
       pass.setVertexBuffer(0, mesh.buf);
       pass.draw(mesh.count);

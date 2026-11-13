@@ -15,6 +15,7 @@ import { curves, CURVE_DEFAULTS, partD, PART_D_DEFAULTS, segmentCount, segmentPo
          sampleBezier, sampleCatmull, alongBezier, moveBezierPoint, addBezierSegment, downloadJSON } from './scene/partD.js';
 import { eventNDC, pickUv, pickPoint } from './scene/picking.js';
 import { composeTRS } from './scene/compose.js';
+import { extrude } from './scene/extrude.js';
 import { createPanel, matrixHTML } from './ui/panel.js';
 
 const $ = id => document.getElementById(id);
@@ -92,6 +93,8 @@ function buildUI() {
   keep(ui.checkbox('casteljau', partD, 'showCasteljau'));
   keep(ui.checkbox('catmull', partD, 'showCatmull'));
   keep(ui.checkbox('follower', partD, 'animateAlong'));
+  keep(ui.checkbox('extrude', partD, 'extrude'));
+  keep(ui.slider('depth', partD, 'depth', 0.05, 1));
   ui.html('hint').innerHTML = 'drag a point to move it · shift+click adds a segment / point';
   ui.button('export JSON', downloadJSON);
   ui.button('reset curves', () => Object.assign(curves, structuredClone(CURVE_DEFAULTS)));
@@ -217,6 +220,7 @@ async function main() {
     painting: r.mesh(quad(PAINTING.width, PAINTING.height), 'textured'),
     cube: r.mesh(cube()),
     pyramid: r.mesh(pyramid()),
+    hillWall: r.dynamicMesh(4096),
   };
   const paintingTex = await r.texture(PAINTING.url);
   const ui = buildUI();
@@ -269,6 +273,13 @@ async function main() {
       const model = composeTRS(M.translate(x, y, 0.05), M.rotateZ(angle - Math.PI / 2), M.scale(0.07, 0.07, 0.07));
       r.drawMesh(meshes.pyramid, model, [0.95, 0.25, 0.85, 1]);
       if (app.showAxes) drawAxes(r, model, 0.12);
+    }
+
+    // Bonus: the Catmull–Rom hill line swept along +z into a wall (an extrusion), rebuilt every frame
+    if (app.showCurves && report.extrude && partD.extrude) {
+      const line = sampleCatmull(curves.catmull, 12).map(uv => uvToWorld(uv, 0.002));
+      r.updateMesh(meshes.hillWall, extrude(line, partD.depth));
+      r.drawMesh(meshes.hillWall, M.identity(), [0.55, 0.62, 0.48, 1], true);
     }
 
     if (mainCam && app.view === 'inspect' && app.showFrustum && report.frustum) {

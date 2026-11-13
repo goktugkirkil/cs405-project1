@@ -7,6 +7,7 @@ import * as C from '../scene/compose.js';
 import { Node } from '../scene/graph.js';
 import * as Cam from '../scene/camera.js';
 import * as Cv from './curves.js';
+import * as Ex from '../scene/extrude.js';
 
 const tests = [];
 const test = (part, name, fn) => tests.push({ part, name, fn });
@@ -216,6 +217,19 @@ test('D', 'catmullRom', () => {
   vecNear(Cv.catmullRom(...p, 0.5), [1.5, 1.125], 't = 0.5');
 });
 
+// ───────── Bonus: extrusion (src/scene/extrude.js)
+test('Bonus', 'extrude', () => {
+  const m = Ex.extrude([[0, 0, 0], [1, 0, 0], [1, 1, 0]], 2);
+  if (!(m instanceof Float32Array)) throw new Error('must return a Float32Array');
+  if (m.length !== 2 * 6 * 6) throw new Error(`2 segments → 12 vertices → 72 floats, got ${m.length}`);
+  const v = i => Array.from(m.slice(i * 6, i * 6 + 6));
+  vecNear(v(0), [0, 0, 0, 0, -1, 0], 'vertex 0 = a, normal (b−a)×z');
+  vecNear(v(1), [1, 0, 0, 0, -1, 0], 'vertex 1 = b');
+  vecNear(v(2), [1, 0, 2, 0, -1, 0], 'vertex 2 = b2');
+  vecNear(v(5), [0, 0, 2, 0, -1, 0], 'vertex 5 = a2');
+  vecNear(v(6), [1, 0, 0, 1, 0, 0], 'second segment starts at points[1], normal (1,0,0)');
+});
+
 /** Run every test. status: 'pass' | 'fail' | 'todo' (function not written yet). */
 export function runAll() {
   const results = tests.map(({ part, name, fn }) => {
@@ -231,5 +245,6 @@ export function runAll() {
            partA: partOK('A'), partB: partOK('A') && partOK('B'), partC: partOK('A') && partOK('C'),
            orbit: partOK('A') && partOK('C') && results.filter(r => r.name === 'orbitEye').every(r => r.status === 'pass'),
            frustum: partOK('A') && partOK('C') && partOK('Ccam'),
-           partD: partOK('A') && partOK('D') };
+           partD: partOK('A') && partOK('D'),
+           extrude: partOK('A') && partOK('D') && partOK('Bonus') };
 }
