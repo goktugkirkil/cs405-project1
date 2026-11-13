@@ -101,7 +101,7 @@ function buildUI() {
   ui.button('reset scene', () => {
     Object.assign(partA, PART_A_DEFAULTS);
     Object.assign(partD, PART_D_DEFAULTS);
-    Object.assign(app, APP_DEFAULTS);
+    Object.assign(app, { ...APP_DEFAULTS, animate: app.animate });   // keep a paused animation paused
     Object.assign(camera, structuredClone(CAMERA_DEFAULTS));
     Object.assign(curves, structuredClone(CURVE_DEFAULTS));
     clock.t = 0;
